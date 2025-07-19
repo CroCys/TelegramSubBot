@@ -1,0 +1,22 @@
+spring:
+  application:
+    name: TelegramSubBot
+
+  datasource:
+    url: jdbc:postgresql://db:5432/telegram_sub_bot
+    username: admin
+    password: G!v3M3y0urM0n3y
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+
+bot:
+  username: subspaymentsbot
+  token: 7650551089:AAHL-ittVUv2T6jXGTSkI7lmu88c9ke-aY0
+
+admin:
+  telegram-id: 644991067
+
+server:
+  port: 9090

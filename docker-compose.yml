@@ -1,0 +1,32 @@
+services:
+  db:
+    image: bitnami/postgresql:17.5.0
+    container_name: telegramsubbot-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: telegram_sub_bot
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: G!v3M3y0urM0n3y
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  bot:
+    build: .
+    container_name: telegramsubbot
+    restart: unless-stopped
+    depends_on:
+      - db
+    environment:
+      DB_URL: jdbc:postgresql://db:5432/telegram_sub_bot
+      DB_USER: admin
+      DB_PASS: G!v3M3y0urM0n3y
+      BOT_USERNAME: subspaymentsbot
+      BOT_TOKEN: 7650551089:AAHL-ittVUv2T6jXGTSkI7lmu88c9ke-aY0
+      ADMIN_TELEGRAM_ID: 644991067
+    ports:
+      - "9090:9090"
+
+volumes:
+  db_data:
