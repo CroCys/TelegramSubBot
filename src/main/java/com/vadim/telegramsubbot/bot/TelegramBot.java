@@ -81,19 +81,27 @@ public class TelegramBot extends TelegramLongPollingBot {
         Long chatId = message.getChatId();
         Long telegramId = message.getFrom().getId();
         String name = message.getFrom().getFirstName();
+        String lastName = message.getFrom().getLastName();
         String username = message.getFrom().getUserName();
         User user = userService.findByTelegramId(telegramId)
             .orElseGet(() -> userService.save(User.builder()
                 .telegramId(telegramId)
                 .name(name)
+                .lastName(lastName)
                 .username(username)
                 .isAdmin(false)
                 .build()));
-        // обновляем username если изменился
+        // обновляем username и lastName если изменились
+        boolean changed = false;
+        if (lastName != null && !lastName.equals(user.getLastName())) {
+            user.setLastName(lastName);
+            changed = true;
+        }
         if (username != null && !username.equals(user.getUsername())) {
             user.setUsername(username);
-            userService.save(user);
+            changed = true;
         }
+        if (changed) userService.save(user);
         boolean isAdmin = telegramId.equals(adminTelegramId) || user.isAdmin();
         try {
             if ("/start".equalsIgnoreCase(text) || BTN_MENU.equalsIgnoreCase(text)) {
@@ -543,10 +551,15 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     private String getDisplayName(User user) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(user.getName());
+        if (user.getLastName() != null && !user.getLastName().isEmpty()) {
+            sb.append(" ").append(user.getLastName());
+        }
         if (user.getUsername() != null && !user.getUsername().isEmpty()) {
             String atUsername = user.getUsername().startsWith("@") ? user.getUsername() : ("@" + user.getUsername());
-            return user.getName() + " " + atUsername;
+            sb.append(" ").append(atUsername);
         }
-        return user.getName();
+        return sb.toString();
     }
 } 

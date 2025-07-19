@@ -21,6 +21,8 @@ public class User {
 
     private String name;
 
+    private String lastName; // Telegram last name
+
     private String username; // Telegram username
 
     private boolean isAdmin;
