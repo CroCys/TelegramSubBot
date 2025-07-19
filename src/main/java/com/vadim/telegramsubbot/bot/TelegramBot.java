@@ -81,12 +81,19 @@ public class TelegramBot extends TelegramLongPollingBot {
         Long chatId = message.getChatId();
         Long telegramId = message.getFrom().getId();
         String name = message.getFrom().getFirstName();
+        String username = message.getFrom().getUserName();
         User user = userService.findByTelegramId(telegramId)
             .orElseGet(() -> userService.save(User.builder()
                 .telegramId(telegramId)
                 .name(name)
+                .username(username)
                 .isAdmin(false)
                 .build()));
+        // обновляем username если изменился
+        if (username != null && !username.equals(user.getUsername())) {
+            user.setUsername(username);
+            userService.save(user);
+        }
         boolean isAdmin = telegramId.equals(adminTelegramId) || user.isAdmin();
         try {
             if ("/start".equalsIgnoreCase(text) || BTN_MENU.equalsIgnoreCase(text)) {
@@ -273,7 +280,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     private void notifyAdminAboutPayment(Payment payment) {
-        String text = "Пользователь @" + payment.getUser().getName() + " оплатил подписку <b>" + payment.getSubscription().getName() + "</b>. Подтвердить?";
+        String text = "Пользователь " + getDisplayName(payment.getUser()) + " оплатил подписку <b>" + payment.getSubscription().getName() + "</b>. Подтвердить?";
         InlineKeyboardButton confirmBtn = InlineKeyboardButton.builder()
                 .text("Подтвердить оплату")
                 .callbackData("confirm_" + payment.getId())
@@ -431,7 +438,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
         List<List<InlineKeyboardButton>> rows = new ArrayList<>();
         for (Payment payment : pending) {
-            String btnText = payment.getUser().getName() + " — " + payment.getSubscription().getName() + " (" + payment.getSubscription().getPrice() + "₽)";
+            String btnText = getDisplayName(payment.getUser()) + " — " + payment.getSubscription().getName() + " (" + payment.getSubscription().getPrice() + "₽)";
             rows.add(List.of(InlineKeyboardButton.builder()
                 .text(btnText)
                 .callbackData("confirm_" + payment.getId())
@@ -469,12 +476,12 @@ public class TelegramBot extends TelegramLongPollingBot {
         LocalDate now = LocalDate.now();
         List<Payment> payments = paymentService.findByMonthAndYear(now.getMonthValue(), now.getYear());
         if (payments.isEmpty()) {
-            editMessage(chatId, messageId, "📊 Нет оплат за этот месяц.");
+            editMessageHtml(chatId, messageId, "📊 Нет оплат за этот месяц.");
             return;
         }
         StringBuilder sb = new StringBuilder("📊 <b>Все оплаты за " + now.format(DATE_FORMAT) + ":</b>\n");
         for (Payment payment : payments) {
-            sb.append("\n").append(payment.getUser().getName())
+            sb.append("\n").append(getDisplayName(payment.getUser()))
               .append(" — ").append(payment.getSubscription().getName())
               .append(" | ")
               .append(payment.getStatus() == Payment.Status.PAID ? "✅ Оплачено" : "⏳ Ожидает");
@@ -493,7 +500,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 boolean paid = paymentService.findByUserAndSubscriptionAndMonthAndYear(user, sub, now.getMonthValue(), now.getYear())
                     .stream().anyMatch(p -> p.getStatus() == Payment.Status.PAID);
                 if (!paid) {
-                    sb.append("\n").append(user.getName()).append(" — ").append(sub.getName());
+                    sb.append("\n").append(getDisplayName(user)).append(" — ").append(sub.getName());
                     found = true;
                 }
             }
@@ -533,5 +540,13 @@ public class TelegramBot extends TelegramLongPollingBot {
         } catch (TelegramApiException e) {
             e.printStackTrace();
         }
+    }
+
+    private String getDisplayName(User user) {
+        if (user.getUsername() != null && !user.getUsername().isEmpty()) {
+            String atUsername = user.getUsername().startsWith("@") ? user.getUsername() : ("@" + user.getUsername());
+            return user.getName() + " " + atUsername;
+        }
+        return user.getName();
     }
 } 

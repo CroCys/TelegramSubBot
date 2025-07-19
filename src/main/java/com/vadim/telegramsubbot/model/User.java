@@ -21,6 +21,8 @@ public class User {
 
     private String name;
 
+    private String username; // Telegram username
+
     private boolean isAdmin;
 
     @ManyToMany(fetch = FetchType.EAGER)

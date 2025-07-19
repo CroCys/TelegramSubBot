@@ -3,7 +3,6 @@ package com.vadim.telegramsubbot.scheduler;
 import com.vadim.telegramsubbot.model.Subscription;
 import com.vadim.telegramsubbot.model.User;
 import com.vadim.telegramsubbot.service.SubscriptionService;
-import com.vadim.telegramsubbot.service.UserService;
 import com.vadim.telegramsubbot.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -14,7 +13,6 @@ import java.util.Set;
 @Component
 @RequiredArgsConstructor
 public class ReminderScheduler {
-    private final UserService userService;
     private final SubscriptionService subscriptionService;
     private final NotificationService notificationService;
 
